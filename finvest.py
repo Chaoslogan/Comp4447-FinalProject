@@ -114,6 +114,12 @@ def _value_to_float(value):
         value = 0.0
     return value
 
+def _replace_value(value):
+    if pd.isna(value) or value is None or value == '-':
+        return 0
+    else:
+        return value
+
 def screen_stcks(base_df):
     """function takes base stock data and applies filter criteria to screening site for like companies"""
     logf.info(f"call screener data of similar stocks to main starter stock")
@@ -124,17 +130,19 @@ def screen_stcks(base_df):
     cls_ovrvw.set_filter(filters_dict=sub_dict)
     ovr_df=cls_ovrvw.screener_view(columns = list(map(str,fvColumns.keys())))
 
-    ovr_df['Debt/Eq'] = ovr_df['Debt/Eq'].fillna(0)
-
-    lmt_mrkt_cap = extract_mrk_cp_lmt(base_df['Market Cap'][0])
-    base_df['Debt/Eq']=base_df['Debt/Eq'].fillna(0)
-
     #if type(base_df['Debt/Eq'][0]) == str:
     #    base_df['Debt/Eq'] = 0
 
+    ovr_df['Debt/Eq'] = ovr_df['Debt/Eq'].fillna(0)
+
+    lmt_mrkt_cap = extract_mrk_cp_lmt(base_df['Market Cap'][0])
+    base_df['Debt/Eq']=base_df['Debt/Eq'].apply(_replace_value)
+    
     #base_df['Debt/Eq'] = base_df['Debt/Eq'].apply(_value_to_float)
 
     lmt_dbt_cap = ((float(base_df['Debt/Eq'][0])//.1)+4)/10
+
+    #lmt_ovr_df = ovr_df[(ovr_df['Market Cap'] >= lmt_mrkt_cap)].reset_index()
 
     lmt_ovr_df = ovr_df[(ovr_df['Market Cap'] >= lmt_mrkt_cap) & (ovr_df['Debt/Eq'] < lmt_dbt_cap)].reset_index()
 
@@ -208,7 +216,9 @@ def base_charting(bc_stck_df, disp_bool=True):
     plt.figure(figsize=(10,6))
     cstm_cmap = sns.color_palette("coolwarm", as_cmap = True)
     sns.heatmap(data=map_df_a.corr(), cmap = cstm_cmap, annot=True, fmt='.2f', vmin=-1, vmax=1)
-    
+    base_stck = bc_stck_df[bc_stck_df['cat_grp']==1]['Ticker\n\n'].item()
+    plt.title(f"{base_stck} Industry heatmap")
+
     if disp_bool:
         plt.show()
     else:
@@ -218,7 +228,7 @@ def base_charting(bc_stck_df, disp_bool=True):
     """capture low correlation groups"""
     bc_stck_df['Dividend']= bc_stck_df['Dividend'].fillna(0)
     map_df_b = bc_stck_df.select_dtypes(include = np.number)
-    map_df_b = map_df_b.drop(['Dividend','50D High','50D Low','total_rank','from Open'],axis=1)
+    map_df_b = map_df_b.drop(['Dividend','50D High','50D Low','total_rank','from Open','Change'],axis=1)
     corr_matrix = map_df_b.corr()
     mask = np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
     abs_corr_values = corr_matrix.mask(mask)
@@ -236,7 +246,10 @@ def base_charting(bc_stck_df, disp_bool=True):
         sns.scatterplot(data=bc_stck_df, x=x_var, y=y_var, hue='cat_desc', palette=custom_palette, hue_order=cat_lbls, ax=ax)
         ax.set_title(f"Scatter Plot: {x_var} vs {y_var}")
         ax.grid(True)
+        ax.legend(loc='upper right', bbox_to_anchor=(1.05,1.2), title="Sector Groups")
     plt.tight_layout()
+    plt.subplots_adjust(top=.9)
+    plt.suptitle(f"{base_stck} un-correlated scatterplots")
 
     if disp_bool:
         plt.show()
