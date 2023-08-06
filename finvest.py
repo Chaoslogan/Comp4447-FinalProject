@@ -48,7 +48,7 @@ def setup_logger():
 
 def stck_base_data(sbd_stck, harvest_bool = True):
     """get base stock HTML data from finviz site"""
-    #logf.info(f"call finviz basic data to get base stock design")
+    logf.info(f"call finviz basic data to get base stock design")
     sbd_stck_soup = fv.web_scrap(sbd_stck)
     sbd_stck_pretty = sbd_stck_soup.prettify()
 
@@ -104,6 +104,16 @@ def extract_mrk_cp_lmt(string):
             multiplier = 1e5
         return (float(num_str)//10) * multiplier
 
+def _value_to_float(value):
+    """
+    Helper function to fix values from website
+    """
+    try:
+        value = float(value)
+    except ValueError:
+        value = 0.0
+    return value
+
 def screen_stcks(base_df):
     """function takes base stock data and applies filter criteria to screening site for like companies"""
     logf.info(f"call screener data of similar stocks to main starter stock")
@@ -114,6 +124,8 @@ def screen_stcks(base_df):
     cls_ovrvw.set_filter(filters_dict=sub_dict)
     ovr_df=cls_ovrvw.screener_view(columns = list(map(str,fvColumns.keys())))
 
+    ovr_df['Debt/Eq'] = ovr_df['Debt/Eq'].fillna(0)
+
     lmt_mrkt_cap = extract_mrk_cp_lmt(base_df['Market Cap'][0])
 
     base_df['Debt/Eq']=base_df['Debt/Eq'].fillna(0)
@@ -121,8 +133,9 @@ def screen_stcks(base_df):
     if type(base_df['Debt/Eq'][0]) == str:
         base_df['Debt/Eq'] = 0
 
-    lmt_dbt_cap = ((float(base_df['Debt/Eq'][0])//.1)+4)/10
+    #base_df['Debt/Eq'] = base_df['Debt/Eq'].apply(_value_to_float)
 
+    lmt_dbt_cap = ((float(base_df['Debt/Eq'][0])//.1)+4)/10
 
     lmt_ovr_df = ovr_df[(ovr_df['Market Cap'] >= lmt_mrkt_cap) & (ovr_df['Debt/Eq'] < lmt_dbt_cap)].reset_index()
 
