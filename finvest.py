@@ -19,6 +19,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+
+
 def setup_logger():
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
@@ -46,6 +48,8 @@ def setup_logger():
     return logger
 
 
+
+
 def stck_base_data(sbd_stck, harvest_bool = True):
     """get base stock HTML data from finviz site"""
     logf.info(f"call finviz basic data to get base stock design")
@@ -60,6 +64,9 @@ def stck_base_data(sbd_stck, harvest_bool = True):
         sbd_stck_soup = pd.DataFrame(stck_soup_harvest(sbd_stck_soup,columns),index=[0])
 
     return sbd_stck_soup  
+
+
+
 
 def stck_soup_harvest(h_soup,col_names):
     """return dict of finviz scraped data"""
@@ -89,6 +96,9 @@ def stck_soup_harvest(h_soup,col_names):
     
     return ssh_out_dict
 
+
+
+
 def extract_mrk_cp_lmt(string):
     """function to extract Market Cap string and calc a lower limit"""
     logf.info(f"extract Market Cap data to create lower limit for competitor comps")
@@ -104,6 +114,9 @@ def extract_mrk_cp_lmt(string):
             multiplier = 1e5
         return (float(num_str)//10) * multiplier
 
+
+
+
 def _value_to_float(value):
     """
     Helper function to fix values from website
@@ -114,11 +127,17 @@ def _value_to_float(value):
         value = 0.0
     return value
 
+
+
+
 def _replace_value(value):
     if pd.isna(value) or value is None or value == '-':
         return 0
     else:
         return value
+
+
+
 
 def screen_stcks(base_df):
     """function takes base stock data and applies filter criteria to screening site for like companies"""
@@ -147,6 +166,9 @@ def screen_stcks(base_df):
     lmt_ovr_df = ovr_df[(ovr_df['Market Cap'] >= lmt_mrkt_cap) & (ovr_df['Debt/Eq'] < lmt_dbt_cap)].reset_index()
 
     return lmt_ovr_df
+
+
+
 
 def rank_screener(rs_stck_df, rs_base_stck):
     """rank categories in the given df for a total rank"""
@@ -206,6 +228,9 @@ def rank_screener(rs_stck_df, rs_base_stck):
 
     return rs_stck_df
 
+
+
+
 def base_charting(bc_stck_df, disp_bool=True):
 
     """create heatmap for correlations"""
@@ -260,6 +285,8 @@ def base_charting(bc_stck_df, disp_bool=True):
     return 
 
 
+
+
 def main_prog(input_stck="MSFT"):
     
     #logf = setup_logger()
@@ -288,6 +315,9 @@ def main_prog(input_stck="MSFT"):
 
 
     return main_stck_df
+
+
+
 
 
 logf = setup_logger()
