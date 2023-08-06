@@ -117,6 +117,10 @@ def screen_stcks(base_df):
     lmt_mrkt_cap = extract_mrk_cp_lmt(base_df['Market Cap'][0])
 
     base_df['Debt/Eq']=base_df['Debt/Eq'].fillna(0)
+
+    if type(base_df['Debt/Eq'][0]) == str:
+        base_df['Debt/Eq'] = 0
+
     lmt_dbt_cap = ((float(base_df['Debt/Eq'][0])//.1)+4)/10
 
 
