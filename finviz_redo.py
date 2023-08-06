@@ -19,7 +19,7 @@ session = requests.Session()
 
 
 def web_scrap(stck):
-    """Scrap website.
+    """Scrape website.
     
     """
 
@@ -36,3 +36,5 @@ def web_scrap(stck):
     except requests.exceptions.Timeout as err:
         raise Exception(err)
     return soup
+
+

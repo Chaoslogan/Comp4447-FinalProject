@@ -129,8 +129,8 @@ def screen_stcks(base_df):
     lmt_mrkt_cap = extract_mrk_cp_lmt(base_df['Market Cap'][0])
     base_df['Debt/Eq']=base_df['Debt/Eq'].fillna(0)
 
-    if type(base_df['Debt/Eq'][0]) == str:
-        base_df['Debt/Eq'] = 0
+    #if type(base_df['Debt/Eq'][0]) == str:
+    #    base_df['Debt/Eq'] = 0
 
     #base_df['Debt/Eq'] = base_df['Debt/Eq'].apply(_value_to_float)
 
@@ -144,12 +144,14 @@ def rank_screener(rs_stck_df, rs_base_stck):
     """rank categories in the given df for a total rank"""
     ranking_columns = ['P/E','Fwd P/E','P/S','P/B','P/C','P/FCF','Debt/Eq','EPS','ROA','ROE','ROI','52W High']
     ascending_rank = [True, True, True, True, True, True, True, False, False, False, False, True]
-
+    
+    logf.debug(f"rank given categories")
     for x in range(len(ranking_columns)):
         new_col_name = 'rank ' + ranking_columns[x]
         nan_opt = 'bottom' if ascending_rank[x] else 'top'
         rs_stck_df[new_col_name]=rs_stck_df[ranking_columns[x]].rank(method='average',na_option = nan_opt, ascending=ascending_rank[x])
     
+    logf.debug(f"")
     rank_columns = rs_stck_df.filter(like = 'rank')
     rs_stck_df['total_rank']=rank_columns.sum(axis=1)  
     rs_stck_df['total_rank']=rs_stck_df['total_rank'].rank(method='average', ascending = True)
@@ -204,7 +206,8 @@ def base_charting(bc_stck_df, disp_bool=True):
     corr_col_lst = ['P/E','Fwd P/E','PEG','P/S','P/B','P/FCF','EPS','EPS this Y','EPS next Y','Inst Own','ROA','ROE','ROI','Debt/Eq','Gross M','Oper M','Profit M']
     map_df_a = map_df_a[corr_col_lst]
     plt.figure(figsize=(10,6))
-    sns.heatmap(data=map_df_a.corr(), cmap = 'coolwarm', annot=True, fmt='.2f')
+    cstm_cmap = sns.color_palette("coolwarm", as_cmap = True)
+    sns.heatmap(data=map_df_a.corr(), cmap = cstm_cmap, annot=True, fmt='.2f', vmin=-1, vmax=1)
     
     if disp_bool:
         plt.show()
