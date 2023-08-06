@@ -228,7 +228,7 @@ def base_charting(bc_stck_df, disp_bool=True):
     """capture low correlation groups"""
     bc_stck_df['Dividend']= bc_stck_df['Dividend'].fillna(0)
     map_df_b = bc_stck_df.select_dtypes(include = np.number)
-    map_df_b = map_df_b.drop(['Dividend','50D High','50D Low','total_rank','from Open','Change'],axis=1)
+    map_df_b = map_df_b.drop(['Dividend','50D High','50D Low','52W High','52W Low','total_rank','from Open','Change'],axis=1)
     corr_matrix = map_df_b.corr()
     mask = np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
     abs_corr_values = corr_matrix.mask(mask)
@@ -295,3 +295,14 @@ logf = setup_logger()
 if __name__ == "__main__":
     logf = setup_logger()
     #main_prog()
+
+
+"""
+Next steps:
+Take the 'Top Comp' category of companies along with the main stock and pull the financials of the companies, their analyst forecasts.
+Project their performance into the future (about 5 years) and then performa a discount cash flow analysis to see which company is the 
+'cheaper' option with the best potential rate of return.
+
+Keep in mind that all of this is for educational purposes and this should not be used to solely make an investment decision with.
+
+"""
