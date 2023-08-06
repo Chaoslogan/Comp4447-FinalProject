@@ -27,8 +27,8 @@ def setup_logger():
         logger.handlers = []
     
     #Create console handler and set level
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
+    #stream_handler = logging.StreamHandler()
+    #stream_handler.setLevel(logging.DEBUG)
 
     #Create file handler and set level - file to go to current directory
     file_handler = logging.FileHandler(
@@ -37,10 +37,10 @@ def setup_logger():
 
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    stream_handler.setFormatter(formatter)
+    #stream_handler.setFormatter(formatter)
     file_handler.setFormatter(formatter)
 
-    logger.addHandler(stream_handler)
+    #logger.addHandler(stream_handler)
     logger.addHandler(file_handler)
 
     return logger
@@ -127,7 +127,6 @@ def screen_stcks(base_df):
     ovr_df['Debt/Eq'] = ovr_df['Debt/Eq'].fillna(0)
 
     lmt_mrkt_cap = extract_mrk_cp_lmt(base_df['Market Cap'][0])
-
     base_df['Debt/Eq']=base_df['Debt/Eq'].fillna(0)
 
     if type(base_df['Debt/Eq'][0]) == str:
@@ -197,31 +196,52 @@ def rank_screener(rs_stck_df, rs_base_stck):
 
     return rs_stck_df
 
-def base_charting(bc_stck_df):
-    """create correlation chart and top correlation relationships"""
-    map_df = bc_stck_df.select_dtypes(include=np.number)
-    map_df = map_df.drop(columns=['index', 'cat_grp','total_rank','Target Price','Volume'])
-    corr_col_lst = ['Fwd P/E','P/S','P/B','P/FCF','ROA','ROE','ROI','Debt/Eq','Gross M','Oper M',]
-    map_df = map_df[corr_col_lst]
-    sns.heatmap(data=map_df.corr(), cmap = 'coolwarm', annot=True, fmt='.2f')
-    plt.savefig('base_corr.png')
-    plt.close()
+def base_charting(bc_stck_df, disp_bool=True):
 
-    corr_values = map_df.corr().unstack()
-    corr_values = corr_values.drop_duplicates()
-    corr_values = corr_values[corr_values < 1]
-    corr_values = corr_values.sort_values(ascending=False)
-    top_corr_cat = corr_values.head(3)
-    top_inv_corr_cat = corr_values.tail(3)
+    """create heatmap for correlations"""
+    map_df_a = bc_stck_df.select_dtypes(include=np.number)
+    map_df_a = map_df_a.drop(columns=['index', 'cat_grp','total_rank','Target Price','Volume'])
+    corr_col_lst = ['P/E','Fwd P/E','PEG','P/S','P/B','P/FCF','EPS','EPS this Y','EPS next Y','Inst Own','ROA','ROE','ROI','Debt/Eq','Gross M','Oper M','Profit M']
+    map_df_a = map_df_a[corr_col_lst]
+    plt.figure(figsize=(10,6))
+    sns.heatmap(data=map_df_a.corr(), cmap = 'coolwarm', annot=True, fmt='.2f')
+    
+    if disp_bool:
+        plt.show()
+    else:
+        plt.savefig('base_corr.png')
+        plt.close()
 
-    top_corr_df = top_corr_cat.reset_index()
-    top_inv_corr_df = top_inv_corr_cat.reset_index()
+    """capture low correlation groups"""
+    bc_stck_df['Dividend']= bc_stck_df['Dividend'].fillna(0)
+    map_df_b = bc_stck_df.select_dtypes(include = np.number)
+    map_df_b = map_df_b.drop(['Dividend','50D High','50D Low','total_rank','from Open'],axis=1)
+    corr_matrix = map_df_b.corr()
+    mask = np.triu(np.ones(corr_matrix.shape), k=1).astype(bool)
+    abs_corr_values = corr_matrix.mask(mask)
+    n_keep = 6
+    least_corr_cols = abs_corr_values.unstack().nsmallest(n_keep).index
 
-    col_names = ['Elem1', 'Elem2', 'c_score']
-    top_corr_df.columns = col_names
-    top_inv_corr_df.columns = col_names
+    """create 2x3 grid of category comparisons"""
+    fig, axes = plt.subplots(nrows=n_keep//2, ncols=2, figsize = (12,10))
+    fig.patch.set_facecolor('#D3D3D3')
+    cat_lbls = ['Main','Top Comp','Grp Avg','Others']
+    custom_palette = {'Main': 'black', 'Top Comp': 'blue', 'Grp Avg': 'red', 'Others': 'goldenrod'}
 
-    return top_corr_df, top_inv_corr_df
+
+    for (x_var, y_var), ax in zip(least_corr_cols, axes.flatten()):
+        sns.scatterplot(data=bc_stck_df, x=x_var, y=y_var, hue='cat_desc', palette=custom_palette, hue_order=cat_lbls, ax=ax)
+        ax.set_title(f"Scatter Plot: {x_var} vs {y_var}")
+        ax.grid(True)
+    plt.tight_layout()
+
+    if disp_bool:
+        plt.show()
+    else:
+        plt.savefig('sns_comp.png')
+        plt.close()
+
+    return 
 
 
 def main_prog(input_stck="MSFT"):
